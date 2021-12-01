@@ -3,7 +3,7 @@ FROM ruby:2.7.4-slim
 LABEL org.opencontainers.image.authors="SetOps <support@setops.co>" \
       org.opencontainers.image.url="https://github.com/setopsco/sample_app_6th_ed/blob/main/README.md" \
       org.opencontainers.image.source="https://github.com/setopsco/sample_app_6th_ed.git" \
-      org.opencontainers.image.title="Rails Sample App for SetOps" \
+      org.opencontainers.image.title="Rails Sample App for SetOps"
 
 LABEL maintainer "SetOps"
 
