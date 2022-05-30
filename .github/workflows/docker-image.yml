@@ -9,7 +9,7 @@ on:
     - cron: "0 0 * * 0"
 
 env:
-  IMAGE_NAME: "rails-sample"
+  IMAGE_NAME: "sample-app-rails"
 
 jobs:
 
