@@ -1,121 +1,98 @@
-# Ruby on Rails Tutorial sample application
+# sample-app-rails
 
-## Reference implementation
+A sample app for [SetOps](https://setops.co) built with [Node.js](https://rails.dev).
 
-This is the reference implementation of the sample application from
-[*Ruby on Rails Tutorial:
-Learn Web Development with Rails*](https://www.railstutorial.org/)
-(6th Edition)
-by [Michael Hartl](http://www.michaelhartl.com/).
+The app is based on https://github.com/learnenough/sample_app_6th_ed and distributed under [MIT License](LICENSE.md).
 
-See also the [7th edition README](https://github.com/learnenough/rails_tutorial_sample_app_7th_ed#readme).
+The app is [deployed on SetOps](https://web.rails.samples.zweitagapps.net) with GitHub Actions from this repository: [check out the deployment workflow](.github/workflows/deploy.yml)!
 
-## License
-
-All source code in the [Ruby on Rails Tutorial](https://www.railstutorial.org/)
-is available jointly under the MIT License and the Beerware License. See
-[LICENSE.md](LICENSE.md) for details.
-
-## Getting started
-
-To get started with the app, first follow the setup steps in [Section 1.1 Up and running](https://www.railstutorial.org/book#sec-up_and_running).
-
-Next, clone the repo and `cd` into the directory:
+If you want to deploy the app yourself, use the image referenced below. Apps created from a SetOps stage template use this image, too.
 
 ```
-$ git clone https://github.com/mhartl/sample_app_6th_ed.git
-$ cd sample_app_6th_ed
+docker pull ghcr.io/setopsco/sample-app-rails:latest
 ```
 
-Also make sure you’re using a compatible version of Node.js:
+![sample-app-rails browser screenshot](docs/screenshot.png)
 
-```
-$ nvm install 16.13.0
-$ node -v
-v16.13.0
-```
+## What to try
 
-Then install the needed packages (while skipping any Ruby gems needed only in production):
+1. Deploy the app as a sample app from the SetOps Web UI. You can select it from the list of sample apps when you create a stage.
 
-```
-$ yarn add jquery@3.5.1 bootstrap@3.4.1
-$ gem install bundler -v 2.2.17
-$ bundle _2.2.17_ config set --local without 'production'
-$ bundle _2.2.17_ install
-```
+1. Wait until the stage is created and the progress bar disappears. Click on the stage and select the *web* app.
 
-Next, migrate the database:
+1. Make yourself comfortable with the app status dashboard and the information it tells you about the current state of your app.
 
-```
-$ rails db:migrate
-```
+1. Open the web app with a click on `Visit Website`.
 
-Finally, run the test suite to verify that everything is working correctly:
+1. Register a new user or login with existing default user `example@railstutorial.org` with password `foobar`.
 
-```
-$ rails test
-```
+1. Read and create posts.
 
-If the test suite passes, you’ll be ready to seed the database with sample users and run the app in a local server:
 
-```
-$ rails db:seed
-$ rails server
-```
 
-Follow the instructions in [Section 1.2.2 `rails server`](https://www.railstutorial.org/book#sec-rails_server) to view the app. You can then register a new user or log in as the sample administrative user with the email `example@railstutorial.org` and password `foobar`.
+## Components
 
-## Deploying
+* **App:** There is one SetOps app: *web*.
 
-To deploy the sample app to production, you’ll need a Heroku account as discussed [Section 1.4 Deploying](https://www.railstutorial.org/book/beginning#sec-deploying).
+  The web app contains the actual rails application build from the code in this repository.
 
-The full production app includes several advanced features, including sending email with [SendGrid](https://sendgrid.com/) and storing uploaded images with [AWS S3](https://aws.amazon.com/s3/). As a result, deploying the full sample app can be rather challenging. The suggested method for testing a deployment is to use the branch for Chapter 10 (“Updating users”), which doesn’t require more advanced settings but still includes sample users.
+* **Services:**
 
-To deploy this version of the app, you’ll need to create a new Heroku application, switch to the right branch, push up the source, run the migrations, and seed the database with sample users:
+  - **PostgresQL** is used to store all records of users and posts.
+  - **S3 Bucket** stores uploaded pictures. 
 
-```
-$ heroku create
-$ git checkout updating-users
-$ git push heroku updating-users:main
-$ heroku run rails db:migrate
-$ heroku run rails db:seed
-```
+## Creating the app
 
-Visiting the URL returned by the original `heroku create` should now show you the sample app running in production. As with the local version, you can then register a new user or log in as the sample administrative user with the email `example@railstutorial.org` and password `foobar`.
+> **Note**
+> These are the steps you need to follow to manually create the app in SetOps. You can use a stage template on the web UI to do this in one step.
 
-## Branches
+1. Create the stage: `setops -p samples stage:create rails`
 
-The reference app repository includes a separate branch for each chapter in the tutorial (Chapters 3–14). To examine the code as it appears at the end of a particular chapter (with some slight variations, such as occasional exercise answers), simply check out the corresponding branch using `git checkout`:
+1. Create the app: `setops -p samples -s rails app:create web`
 
-```
-$ git checkout <branch name>
-```
+1. Configure the app:
 
-A full list of branch names appears as follows (preceded the number of the corresponding chapter in the book):
+   ```
+   setops -p samples -s rails --app web container:set command -- /bin/bash -c "DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bundle exec rake db:schema:load db:seed && bundle exec puma"
+   setops -p samples -s rails --app web container:set health-check -- /bin/sh -c 'curl -s http://localhost:$PORT/.well-known/health-check | grep ok'
+   setops -p samples -s rails --app web network:set health-check-path /.well-known/health-check
+   setops -p samples -s rails --app web network:set public true
+   setops -p samples -s rails --app web network:set port 3000
+   setops -p samples -s rails --app web resource:set cpu 128
+   setops -p samples -s rails --app web resource:set memory 384
+   ```
 
-```
- 3. static-pages
- 4. rails-flavored-ruby
- 5. filling-in-layout
- 6. modeling-users
- 7. sign-up
- 8. basic-login
- 9. advanced-login
-10. updating-users
-11. account-activation
-12. password-reset
-13. user-microposts
-14. following-users
-```
+1. Set ENVs:
 
-For example, to check out the branch for Chapter 7, you would run this at the command line:
+   ```
+   setops -p samples -s rails --app web env:set SECRET_KEY_BASE=YOUR-SECRET-KEY --description "Secret Key to encrypt and sign sessions"
+   setops -p samples -s rails --app web env:set LOGIN_EMAIL=example@railstutorial.org --description "Email for the default admin user"
+   setops -p samples -s rails --app web env:set LOGIN_PASSWORD=foobar --description "Password for the default admin user"
+   ```
 
-```
-$ git checkout sign-up
-```
+1. Create the Postgres database: `setops -p samples -s rails service:create database --type postgresql11 --plan shared`
 
-## Help with the Rails Tutoiral
+1. Create the S3 bucket: `setops -p samples -s rails service:create store --type s3`
 
-Experience shows that comparing code with the reference app is often helpful for debugging errors and tracking down discrepancies. For additional assistance with any issues in the tutorial, please consult the [Rails Tutorial Help page](https://www.railstutorial.org/help).
+1. Create service links:
 
-Suspected errors, typos, and bugs can be emailed to <support@learnenough.com>. All such reports are gratefully received, but please double-check with the [online version of the tutorial](https://www.railstutorial.org/book) and this reference app before submitting.
+   ```
+   setops -p samples -s rails --app web link:create database --env-key DATABASE_URL
+   setops -p samples -s rails --app web link:create store --env-key S3_DATA_URL
+   ```
+
+1. Commit your changes: `setops -p samples -s rails changeset:commit`
+
+1. Push the Docker image and activate the release:
+
+   ```
+   docker pull ghcr.io/setopsco/sample-app-rails:latest
+   docker tag ghcr.io/setopsco/sample-app-rails api.setops.co/demo/samples/rails/web:latest
+   docker push api.setops.co/demo/samples/rails/web:latest
+   # note the sha256:[...] digest after pushing the image and paste it in "release:create"
+   setops -p samples -s rails --app web release:create sha256:3899c519fe3d4ac08ef24bcca1ae7c1c5474f0448f474811f1c3cbda7229a0e4
+   setops -p samples -s rails --app web release:activate 1
+   setops -p samples -s rails changeset:commit
+   ```
+
+1. Open your app! :tada:
