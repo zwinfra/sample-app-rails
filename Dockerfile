@@ -1,4 +1,4 @@
-FROM ruby:2.7.4-slim
+FROM ruby:2.7.5-slim
 
 LABEL org.opencontainers.image.authors="SetOps <support@setops.co>" \
       org.opencontainers.image.url="https://github.com/setopsco/sample_app_6th_ed/blob/main/README.md" \
