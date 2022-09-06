@@ -88,3 +88,5 @@ COPY --chown=nonroot . ./
 
 # Precompile assets with minimal env needed to run rake tasks:
 RUN export $(cat .env.build | xargs) && bundle exec rake assets:precompile
+
+CMD ["/bin/bash", "-c", "DISABLE_DATABASE_ENVIRONMENT_CHECK=1 bundle exec rake db:schema:load db:seed && bundle exec puma"]
